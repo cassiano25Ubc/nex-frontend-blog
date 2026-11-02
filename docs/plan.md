@@ -19,8 +19,8 @@ URL da API no frontend para que possa ser alterada entre ambientes.
 | Post individual — dar like | `POST /api/posts/{id}/likes` | Exigir sessão e enviar o token. A operação não recebe body e retorna `204`; após sucesso, atualizar os dados do post, por exemplo refazendo a consulta de detalhe. |
 | Post individual — remover like | `DELETE /api/posts/{id}/likes` | Exigir sessão e enviar o token. A operação não recebe body e retorna `204`; após sucesso, atualizar os dados do post. |
 | Post individual — responder | `POST /api/posts/{id}/replies` | Exigir sessão e enviar `{ "content": "..." }`. Em sucesso, recebe a reply criada (`201`); atualizar a lista de replies. |
-| Login | `POST /api/auth/login` | Enviar `{ "email": "...", "password": "..." }`. Em sucesso (`200`), guardar o token de sessão e o perfil retornados e atualizar o cabeçalho. |
-| Cadastro | `POST /api/auth/register` | Enviar `{ "name": "...", "email": "...", "password": "..." }`. Em sucesso (`201`), a conta já fica autenticada: guardar o token e perfil retornados e atualizar o cabeçalho. |
+| Login | `POST /api/auth/login` | Enviar `{ "email": "...", "password": "..." }`. Em sucesso (`200`), armazenar o token em cookie `httpOnly` e carregar o perfil autenticado para atualizar o cabeçalho. |
+| Cadastro | `POST /api/auth/register` | Enviar `{ "name": "...", "email": "...", "password": "..." }`. Em sucesso (`201`), armazenar o token em cookie `httpOnly`; a conta já fica autenticada. |
 | Criar post — tela protegida | `POST /api/posts` | Exigir sessão e enviar `{ "title": "...", "content": "..." }`. Em sucesso (`201`), recebe o post criado; encaminhar para o post ou para a página inicial e atualizar a lista conforme o fluxo de navegação escolhido. |
 
 ## Sessão e autorização
@@ -31,13 +31,13 @@ URL da API no frontend para que possa ser alterada entre ambientes.
 - Login e cadastro retornam `{ token, user }`; não é necessário chamar
   `GET /api/me` imediatamente após essas operações. Esse endpoint é útil para
   restaurar o perfil de uma sessão já armazenada.
-- Se `GET /api/me` responder `401`, tratar a sessão como inválida, remover os
-  dados locais e exibir o cabeçalho de visitante.
+- Se `GET /api/me` responder `401`, tratar a sessão como inválida, remover o
+  cookie e exibir o cabeçalho de visitante.
 - O detalhe do post aceita autenticação opcional: sem uma sessão válida,
   `likedByMe` é `false`. Likes e criação de replies exigem autenticação.
-- A API não define endpoint de logout. A ação “sair” é local: limpar a sessão
-  no cliente. A estratégia de armazenamento do token deve ser definida pelo
-  frontend.
+- A API não define endpoint de logout. A ação “sair” é local: limpar o cookie
+  de sessão no servidor. O frontend usa `httpOnly`, `SameSite=Lax` e `Secure`
+  em produção; o token nunca fica acessível ao JavaScript do navegador.
 
 ## Contratos e estados úteis para as telas
 

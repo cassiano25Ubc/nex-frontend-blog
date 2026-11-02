@@ -1,7 +1,13 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { AUTH_COOKIE, logout } from "../lib/api";
+import {
+  ApiError,
+  AUTH_COOKIE,
+  getMe,
+  logout,
+  type UserProfile,
+} from "../lib/api";
 
 async function logoutAction() {
   "use server";
@@ -10,7 +16,20 @@ async function logoutAction() {
 }
 
 export default async function Header() {
-  const isLoggedIn = (await cookies()).has(AUTH_COOKIE);
+  let user: UserProfile | null = null;
+  let sessionError = false;
+
+  if ((await cookies()).has(AUTH_COOKIE)) {
+    try {
+      user = await getMe();
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        redirect("/session/expired");
+      }
+      if (!(error instanceof ApiError)) throw error;
+      sessionError = true;
+    }
+  }
 
   return (
     <header className="navbar bg-base-200 px-4 shadow-sm">
@@ -20,8 +39,11 @@ export default async function Header() {
         </Link>
       </div>
       <nav className="navbar-end gap-2">
-        {isLoggedIn ? (
+        {user ? (
           <>
+            <span className="hidden text-sm sm:inline">
+              Olá, {user.name}
+            </span>
             <Link href="/posts/new" className="btn btn-primary btn-sm">
               Criar post
             </Link>
@@ -42,6 +64,11 @@ export default async function Header() {
           </>
         )}
       </nav>
+      {sessionError && (
+        <p className="ml-3 text-xs text-warning" role="status">
+          Não foi possível validar sua sessão agora.
+        </p>
+      )}
     </header>
   );
 }
