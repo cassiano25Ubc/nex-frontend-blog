@@ -135,8 +135,12 @@ async function request<T>(
       const body = err.response.data as Partial<ErrorResponse> | undefined;
       throw new ApiError(
         err.response.status,
-        body?.error?.code ?? "INTERNAL_ERROR",
-        body?.error?.message ?? err.message,
+        body?.error?.code ??
+          (err.response.status === 404 ? "NOT_FOUND" : "INTERNAL_ERROR"),
+        body?.error?.message ??
+          (err.response.status === 404
+            ? "Rota não encontrada na API. Verifique se o backend está ativo e se BACKEND_URL aponta para ele."
+            : err.message),
         body?.error?.details,
       );
     }

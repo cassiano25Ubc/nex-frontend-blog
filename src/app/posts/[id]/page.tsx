@@ -6,6 +6,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { ApiError, AUTH_COOKIE, getMe, getPost } from "../../lib/api";
 import DeletePostButton from "../../components/DeletePostButton";
+import LikeButton from "../../components/LikeButton";
 import { formatDate } from "../../lib/format";
 
 async function PostContent({ params }: { params: Promise<{ id: string }> }) {
@@ -27,18 +28,22 @@ async function PostContent({ params }: { params: Promise<{ id: string }> }) {
     );
   }
 
-  let isOwner = false;
+  let userId: number | null = null;
+  let sessionLookupFailed = false;
   if ((await cookies()).has(AUTH_COOKIE)) {
     try {
       const user = await getMe();
-      isOwner = user.id === post.author.id;
+      userId = user.id;
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         redirect("/session/expired");
       }
       if (!(error instanceof ApiError)) throw error;
+      sessionLookupFailed = true;
     }
   }
+
+  const isOwner = userId === post.author.id;
 
   return (
     <article className="flex flex-col gap-6">
@@ -77,7 +82,32 @@ async function PostContent({ params }: { params: Promise<{ id: string }> }) {
         {post.content}
       </p>
 
-      <div className="badge badge-ghost">♥ {post.likesCount} curtidas</div>
+      <div className="flex flex-wrap items-center gap-3">
+        {userId !== null ? (
+          <LikeButton
+            initialLiked={post.likedByMe}
+            initialLikesCount={post.likesCount}
+            postId={post.id}
+          />
+        ) : (
+          <span className="badge badge-ghost">
+            ♥ {post.likesCount} curtidas
+          </span>
+        )}
+        {userId === null && !sessionLookupFailed && (
+          <p className="text-sm text-base-content/70">
+            <Link className="link link-primary" href="/login">
+              Entre
+            </Link>{" "}
+            para curtir este post.
+          </p>
+        )}
+        {sessionLookupFailed && (
+          <p className="text-sm text-warning" role="status">
+            Não foi possível validar sua sessão para curtir.
+          </p>
+        )}
+      </div>
 
       <section className="flex flex-col gap-4">
         <h2 className="text-2xl font-semibold">

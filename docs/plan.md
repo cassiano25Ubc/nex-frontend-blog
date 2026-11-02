@@ -16,8 +16,7 @@ URL da API no frontend para que possa ser alterada entre ambientes.
 | Sair | Nenhum endpoint de logout definido | Remover o token e os dados de sessão no cliente e atualizar o cabeçalho. |
 | Página inicial — listar posts | `GET /api/posts?page={page}` | Carregar posts por página. A resposta inclui `data` e `meta`; cada item contém autor, imagem, quantidade de likes e replies. A página padrão é `1`; o limite é fixo em 10. |
 | Post individual — carregar conteúdo | `GET /api/posts/{id}` | Buscar os dados do post, `likesCount`, `likedByMe` e `replies`. A consulta é pública; enviar o token quando houver sessão para receber o estado pessoal de like. |
-| Post individual — dar like | `POST /api/posts/{id}/likes` | Exigir sessão e enviar o token. A operação não recebe body e retorna `204`; após sucesso, atualizar os dados do post, por exemplo refazendo a consulta de detalhe. |
-| Post individual — remover like | `DELETE /api/posts/{id}/likes` | Exigir sessão e enviar o token. A operação não recebe body e retorna `204`; após sucesso, atualizar os dados do post. |
+| Post individual — curtir/descurtir | `GET /api/posts/{id}`, `POST /api/posts/{id}/likes`, `DELETE /api/posts/{id}/likes` | Usuário logado alterna o like com base em `likedByMe`. Após a operação, buscar novamente os dados para atualizar estado e contagem; visitante vê o total e link para login. |
 | Post individual — responder | `POST /api/posts/{id}/replies` | Exigir sessão e enviar `{ "content": "..." }`. Em sucesso, recebe a reply criada (`201`); atualizar a lista de replies. |
 | Login | `POST /api/auth/login` | Enviar `{ "email": "...", "password": "..." }`. Em sucesso (`200`), armazenar o token em cookie `httpOnly` e carregar o perfil autenticado para atualizar o cabeçalho. |
 | Cadastro | `POST /api/auth/register` | Enviar `{ "name": "...", "email": "...", "password": "..." }`. Em sucesso (`201`), armazenar o token em cookie `httpOnly`; a conta já fica autenticada. |
@@ -39,6 +38,8 @@ URL da API no frontend para que possa ser alterada entre ambientes.
   `likedByMe` é `false`. Likes e criação de replies exigem autenticação.
 - Criar post exige sessão. Edição e exclusão exigem sessão e autoria; as telas e
   Server Actions verificam o proprietário, além das verificações do backend.
+- Curtir e descurtir exigem sessão; a API valida a autorização e o detalhe do
+  post fornece `likedByMe` e `likesCount` para refletir o estado confirmado.
 - A API não define endpoint de logout. A ação “sair” é local: limpar o cookie
   de sessão no servidor. O frontend usa `httpOnly`, `SameSite=Lax` e `Secure`
   em produção; o token nunca fica acessível ao JavaScript do navegador.

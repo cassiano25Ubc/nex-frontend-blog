@@ -8,6 +8,9 @@ import {
   AUTH_COOKIE,
   createPost,
   deletePost,
+  getPost,
+  likePost,
+  unlikePost,
   updatePost,
 } from "./lib/api";
 import { getOwnedPost } from "./lib/owned-post";
@@ -21,6 +24,12 @@ export interface PostFormState {
 }
 
 export interface DeletePostState {
+  error?: string;
+}
+
+export interface LikeState {
+  liked: boolean;
+  likesCount: number;
   error?: string;
 }
 
@@ -143,4 +152,47 @@ export async function deletePostAction(
   revalidatePath(`/posts/${postId}`);
   revalidatePath(`/posts/${postId}/edit`);
   redirect("/");
+}
+
+export async function toggleLikeAction(
+  postId: number,
+  _previousState: LikeState,
+  _formData: FormData,
+): Promise<LikeState> {
+  if (!Number.isSafeInteger(postId) || postId < 1) {
+    return {
+      liked: false,
+      likesCount: 0,
+      error: "Post inválido.",
+    };
+  }
+
+  try {
+    const post = await getPost(postId);
+    if (post.likedByMe) {
+      await unlikePost(postId);
+    } else {
+      await likePost(postId);
+    }
+
+    const updatedPost = await getPost(postId);
+    revalidatePath("/");
+    revalidatePath(`/posts/${postId}`);
+
+    return {
+      liked: updatedPost.likedByMe,
+      likesCount: updatedPost.likesCount,
+    };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      if (error.status === 401) await redirectForAuthError();
+      if (error.status === 404) redirect("/");
+      return {
+        liked: _previousState.liked,
+        likesCount: _previousState.likesCount,
+        error: apiErrorMessage(error),
+      };
+    }
+    throw error;
+  }
 }
