@@ -7,6 +7,8 @@ import { redirect } from "next/navigation";
 import { ApiError, AUTH_COOKIE, getMe, getPost } from "../../lib/api";
 import DeletePostButton from "../../components/DeletePostButton";
 import LikeButton from "../../components/LikeButton";
+import ReplyForm from "../../components/ReplyForm";
+import DeleteReplyButton from "../../components/DeleteReplyButton";
 import { formatDate } from "../../lib/format";
 
 async function PostContent({ params }: { params: Promise<{ id: string }> }) {
@@ -130,9 +132,24 @@ async function PostContent({ params }: { params: Promise<{ id: string }> }) {
                   </div>
                   <p className="whitespace-pre-line">{reply.content}</p>
                 </div>
+                {userId === reply.author.id && (
+                  <DeleteReplyButton postId={post.id} replyId={reply.id} />
+                )}
               </li>
             ))}
           </ul>
+        )}
+        {userId !== null ? (
+          <ReplyForm postId={post.id} />
+        ) : (
+          !sessionLookupFailed && (
+            <p className="text-sm text-base-content/70">
+              <Link className="link link-primary" href="/login">
+                Entre
+              </Link>{" "}
+              para responder.
+            </p>
+          )
         )}
       </section>
     </article>

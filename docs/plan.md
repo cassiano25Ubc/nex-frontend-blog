@@ -65,7 +65,15 @@ URL da API no frontend para que possa ser alterada entre ambientes.
 ## Endpoints adicionais não exigidos pelo braindump
 
 O OpenAPI também oferece atualização de avatar (`PUT /api/me/avatar`),
-atualização de imagem do post (`PUT /api/posts/{id}/image`) e exclusão de reply
-(`DELETE /api/posts/{id}/replies/{replyId}`). Esses recursos não estão
-descritos nas telas e funcionalidades do braindump e, portanto, não foram
+atualização de imagem do post (`PUT /api/posts/{id}/image`). Esses recursos não
+estão descritos nas telas e funcionalidades do braindump e, portanto, não foram
 incluídos como requisitos do plano inicial.
+
+## Replies (implementado)
+
+- Responder: `ReplyForm` (textarea) chama `createReplyAction`, que envia
+  `POST /api/posts/{id}/replies` e revalida `/` e `/posts/{id}`. Visitantes veem
+  link para login.
+- Apagar: `DeleteReplyButton` aparece só nas replies do usuário logado e chama
+  `deleteReplyAction`, que confere a autoria no servidor (`getMe` + `getPost`)
+  antes de `DELETE /api/posts/{id}/replies/{replyId}`; a API também valida (`403`).
