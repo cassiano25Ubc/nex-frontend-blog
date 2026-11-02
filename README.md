@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nex Frontend Blog
 
-## Getting Started
+Frontend de um blog feito com **Next.js 16** (App Router), **React 19**, **Tailwind CSS 4** e **daisyUI 5**. Ele consome uma API REST separada (contrato em [`docs/openapi.yaml`](docs/openapi.yaml)).
 
-First, run the development server:
+## Funcionalidades
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- Cadastro, login e logout (token em cookie `httpOnly`, validado no servidor)
+- Listagem paginada de posts e página individual do post
+- Criar, editar e apagar posts (somente o autor; rota de edição protegida)
+- Upload de imagem do post na página de edição (JPEG, PNG ou WebP, até 5 MB)
+- Curtir e descurtir posts
+- Responder posts e apagar as próprias respostas (formulário desabilitado para visitantes)
+
+## Estrutura do projeto
+
+```text
+nex-frontend-blog/
+├── docs/                      # Documentação do projeto
+│   ├── braindump.md           #   Requisitos e ideias iniciais
+│   ├── openapi.yaml           #   Contrato da API (OpenAPI)
+│   └── plan.md                #   Plano de integração front ↔ API
+├── public/                    # Arquivos estáticos (SVGs)
+├── src/
+│   └── app/                   # App Router do Next.js
+│       ├── components/        #   Componentes de UI
+│       │   ├── AuthForm.tsx           # Formulário de login/cadastro
+│       │   ├── DeletePostButton.tsx   # Apagar post (modal de confirmação)
+│       │   ├── DeleteReplyButton.tsx  # Apagar resposta
+│       │   ├── Header.tsx             # Cabeçalho e sessão do usuário
+│       │   ├── LikeButton.tsx         # Curtir / descurtir
+│       │   ├── Pagination.tsx         # Paginação da listagem
+│       │   ├── PostCard.tsx           # Card de post na listagem
+│       │   ├── PostForm.tsx           # Criar/editar post (com imagem)
+│       │   └── ReplyForm.tsx          # Responder um post
+│       ├── lib/               #   Código de apoio (somente servidor)
+│       │   ├── api.ts                 # Cliente da API (axios) e ApiError
+│       │   ├── format.ts              # Formatação de datas
+│       │   └── owned-post.ts          # Verifica se o post é do usuário
+│       ├── login/             #   Página /login
+│       ├── register/          #   Página /register
+│       ├── posts/
+│       │   ├── [id]/          #   Página /posts/:id
+│       │   │   └── edit/      #   Página /posts/:id/edit (protegida)
+│       │   └── new/           #   Página /posts/new (protegida)
+│       ├── session/
+│       │   └── expired/       #   Rota que limpa o cookie e volta ao login
+│       ├── auth-actions.ts    #   Server Actions: login e cadastro
+│       ├── post-actions.ts    #   Server Actions: posts, imagem e likes
+│       ├── reply-actions.ts   #   Server Actions: respostas
+│       ├── layout.tsx         #   Layout raiz
+│       ├── page.tsx           #   Página inicial (listagem)
+│       └── globals.css        #   Estilos globais (Tailwind + daisyUI)
+├── .env.example               # Modelo das variáveis de ambiente
+├── next.config.ts             # Configuração do Next.js
+├── package.json               # Scripts e dependências
+└── tsconfig.json              # Configuração do TypeScript
 ```
 
-Open [http://localhost:3002](http://localhost:3002) with your browser to see the frontend (port 3001 is used by the backend's Bull Dashboard). The backend API runs at `http://localhost:3000` by default; configure `BACKEND_URL` in `.env` if the API uses a different address.
+## Rotas
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Rota | Acesso | Descrição |
+| --- | --- | --- |
+| `/` | Público | Lista de posts paginada |
+| `/posts/[id]` | Público | Post, curtidas e respostas |
+| `/posts/new` | Logado | Criar post |
+| `/posts/[id]/edit` | Autor do post | Editar post e imagem |
+| `/login` | Público | Entrar |
+| `/register` | Público | Criar conta |
+| `/session/expired` | Interna | Encerra sessão inválida e redireciona ao login |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Como rodar
 
-## Learn More
+Pré-requisito: a API do blog em execução (por padrão em `http://localhost:3000`).
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+cp .env.example .env   # ajuste BACKEND_URL se necessário
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Abra [http://localhost:3002](http://localhost:3002).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> A porta 3001 costuma ser usada pelo Bull Dashboard do backend, por isso o frontend roda na **3002**.
 
-## Deploy on Vercel
+## Variáveis de ambiente
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Variável | Padrão | Descrição |
+| --- | --- | --- |
+| `BACKEND_URL` | `http://localhost:3000` | URL base da API do blog |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Scripts
+
+| Comando | Descrição |
+| --- | --- |
+| `npm run dev` | Servidor de desenvolvimento (porta 3002) |
+| `npm run build` | Build de produção |
+| `npm run start` | Executa o build de produção (porta 3002) |
+
+## Documentação
+
+- [Plano de integração](docs/plan.md)
+- [Contrato da API (OpenAPI)](docs/openapi.yaml)
+- [Requisitos iniciais](docs/braindump.md)
