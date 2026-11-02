@@ -64,10 +64,17 @@ URL da API no frontend para que possa ser alterada entre ambientes.
 
 ## Endpoints adicionais não exigidos pelo braindump
 
-O OpenAPI também oferece atualização de avatar (`PUT /api/me/avatar`),
-atualização de imagem do post (`PUT /api/posts/{id}/image`). Esses recursos não
-estão descritos nas telas e funcionalidades do braindump e, portanto, não foram
-incluídos como requisitos do plano inicial.
+O OpenAPI também oferece atualização de avatar (`PUT /api/me/avatar`). Esse recurso não está
+descrito nas telas e funcionalidades do braindump e, portanto, não foi
+incluído como requisito do plano inicial.
+
+## Imagem do post (implementado)
+
+Na página de edição, o `PostForm` tem um campo de arquivo opcional (JPEG, PNG ou
+WebP, até 5 MB; validado em `updatePostAction`). Ao salvar, o título/conteúdo são
+atualizados e, se houver arquivo, ele é enviado via `PUT /api/posts/{id}/image`
+(multipart, campo `image`). `serverActions.bodySizeLimit` está em `6mb` no
+`next.config.ts`, pois o padrão (1 MB) bloquearia o upload.
 
 ## Replies (implementado)
 

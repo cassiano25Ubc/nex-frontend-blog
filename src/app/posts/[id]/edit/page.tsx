@@ -50,6 +50,8 @@ async function EditPostContent({ params }: { params: Promise<{ id: string }> }) 
         action={updatePostAction.bind(null, postId)}
         initialContent={post.content}
         initialTitle={post.title}
+        currentImageUrl={post.imageUrl}
+        withImage
         submitLabel="Salvar alterações"
       />
     </section>

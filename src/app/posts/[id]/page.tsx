@@ -139,17 +139,15 @@ async function PostContent({ params }: { params: Promise<{ id: string }> }) {
             ))}
           </ul>
         )}
-        {userId !== null ? (
-          <ReplyForm postId={post.id} />
-        ) : (
-          !sessionLookupFailed && (
-            <p className="text-sm text-base-content/70">
-              <Link className="link link-primary" href="/login">
-                Entre
-              </Link>{" "}
-              para responder.
-            </p>
-          )
+        <ReplyForm disabled={userId === null} postId={post.id} />
+        {userId === null && !sessionLookupFailed && (
+          <p className="text-sm text-base-content/70">
+            Para responder, você precisa estar logado.{" "}
+            <Link className="link link-primary" href="/login">
+              Entre
+            </Link>{" "}
+            na sua conta.
+          </p>
         )}
       </section>
     </article>

@@ -12,11 +12,15 @@ export default function PostForm({
   action,
   initialTitle = "",
   initialContent = "",
+  currentImageUrl,
+  withImage = false,
   submitLabel,
 }: {
   action: PostAction;
   initialTitle?: string;
   initialContent?: string;
+  currentImageUrl?: string | null;
+  withImage?: boolean;
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
@@ -67,6 +71,38 @@ export default function PostForm({
             </span>
           )}
         </label>
+
+        {withImage && (
+          <div className="flex flex-col gap-2">
+            <label className="label-text font-medium" htmlFor="image">
+              Imagem do post
+            </label>
+            {currentImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                alt="Imagem atual do post"
+                className="max-h-48 w-fit rounded-box"
+                src={currentImageUrl}
+              />
+            )}
+            <input
+              accept="image/jpeg,image/png,image/webp"
+              aria-describedby="image-help"
+              aria-invalid={Boolean(state.fieldErrors?.image)}
+              className={`file-input w-full ${state.fieldErrors?.image ? "file-input-error" : ""}`}
+              id="image"
+              name="image"
+              type="file"
+            />
+            <span
+              className={`text-sm ${state.fieldErrors?.image ? "text-error" : "opacity-70"}`}
+              id="image-help"
+            >
+              {state.fieldErrors?.image ??
+                "JPEG, PNG ou WebP, até 5 MB. Deixe vazio para manter a imagem atual."}
+            </span>
+          </div>
+        )}
 
         <div className="card-actions justify-end">
           <button className="btn btn-primary" disabled={pending} type="submit">

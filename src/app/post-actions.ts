@@ -12,6 +12,7 @@ import {
   likePost,
   unlikePost,
   updatePost,
+  updatePostImage,
 } from "./lib/api";
 import { getOwnedPost } from "./lib/owned-post";
 
@@ -20,7 +21,25 @@ export interface PostFormState {
   fieldErrors?: {
     title?: string;
     content?: string;
+    image?: string;
   };
+}
+
+const IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+function readImage(formData: FormData): File | null {
+  const value = formData.get("image");
+  return value instanceof File && value.size > 0 ? value : null;
+}
+
+function validateImage(image: File | null): string | undefined {
+  if (!image) return undefined;
+  if (!IMAGE_TYPES.includes(image.type)) {
+    return "Envie uma imagem JPEG, PNG ou WebP.";
+  }
+  if (image.size > MAX_IMAGE_BYTES) return "A imagem deve ter até 5 MB.";
+  return undefined;
 }
 
 export interface DeletePostState {
@@ -112,9 +131,14 @@ export async function updatePostAction(
   const validation = validatePost(title, content);
   if (validation.fieldErrors) return validation;
 
+  const image = readImage(formData);
+  const imageError = validateImage(image);
+  if (imageError) return { fieldErrors: { image: imageError } };
+
   try {
     await getOwnedPost(postId);
     await updatePost(postId, { title, content });
+    if (image) await updatePostImage(postId, image);
   } catch (error) {
     if (error instanceof ApiError) {
       if (error.status === 401) await redirectForAuthError();

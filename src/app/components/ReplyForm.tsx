@@ -3,7 +3,13 @@
 import { useActionState, useEffect, useRef } from "react";
 import { createReplyAction, type ReplyFormState } from "../reply-actions";
 
-export default function ReplyForm({ postId }: { postId: number }) {
+export default function ReplyForm({
+  postId,
+  disabled = false,
+}: {
+  postId: number;
+  disabled?: boolean;
+}) {
   const formRef = useRef<HTMLFormElement>(null);
   const action = createReplyAction.bind(null, postId);
   const [state, formAction, pending] = useActionState<ReplyFormState, FormData>(
@@ -16,13 +22,18 @@ export default function ReplyForm({ postId }: { postId: number }) {
   }, [state]);
 
   return (
-    <form action={formAction} className="flex flex-col gap-2" ref={formRef}>
+    <form
+      action={formAction}
+      aria-disabled={disabled}
+      className={`flex flex-col gap-2 ${disabled ? "opacity-50" : ""}`}
+      ref={formRef}
+    >
       <label className="sr-only" htmlFor="reply-content">
         Sua resposta
       </label>
       <textarea
         className="textarea textarea-bordered w-full"
-        disabled={pending}
+        disabled={pending || disabled}
         id="reply-content"
         name="content"
         placeholder="Escreva sua resposta..."
@@ -36,7 +47,7 @@ export default function ReplyForm({ postId }: { postId: number }) {
       )}
       <button
         className="btn btn-primary btn-sm w-fit"
-        disabled={pending}
+        disabled={pending || disabled}
         type="submit"
       >
         {pending && <span className="loading loading-spinner loading-sm" />}
