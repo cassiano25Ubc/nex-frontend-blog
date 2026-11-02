@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { ApiError, listPosts } from "./lib/api";
 import PostCard from "./components/PostCard";
@@ -9,6 +10,7 @@ async function PostList({
 }: {
   searchParams: Promise<{ page?: string | string[] }>;
 }) {
+  await connection();
   const { page } = await searchParams;
   const raw = Array.isArray(page) ? page[0] : page;
   const current = Math.max(1, Number.parseInt(raw ?? "1", 10) || 1);

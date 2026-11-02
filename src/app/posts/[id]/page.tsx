@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 import { Suspense } from "react";
 import { ApiError, getPost } from "../../lib/api";
 import { formatDate } from "../../lib/format";
 
 async function PostContent({ params }: { params: Promise<{ id: string }> }) {
+  await connection();
   const { id } = await params;
   const postId = Number(id);
   if (!Number.isInteger(postId) || postId < 1) notFound();
