@@ -21,7 +21,9 @@ URL da API no frontend para que possa ser alterada entre ambientes.
 | Post individual — responder | `POST /api/posts/{id}/replies` | Exigir sessão e enviar `{ "content": "..." }`. Em sucesso, recebe a reply criada (`201`); atualizar a lista de replies. |
 | Login | `POST /api/auth/login` | Enviar `{ "email": "...", "password": "..." }`. Em sucesso (`200`), armazenar o token em cookie `httpOnly` e carregar o perfil autenticado para atualizar o cabeçalho. |
 | Cadastro | `POST /api/auth/register` | Enviar `{ "name": "...", "email": "...", "password": "..." }`. Em sucesso (`201`), armazenar o token em cookie `httpOnly`; a conta já fica autenticada. |
-| Criar post — tela protegida | `POST /api/posts` | Exigir sessão e enviar `{ "title": "...", "content": "..." }`. Em sucesso (`201`), recebe o post criado; encaminhar para o post ou para a página inicial e atualizar a lista conforme o fluxo de navegação escolhido. |
+| Criar post — `/posts/new` | `POST /api/posts` | Exigir sessão validada e enviar `{ "title": "...", "content": "..." }`. O corpo é editado em textarea. Em sucesso (`201`), encaminhar para o post criado. |
+| Editar post — `/posts/{id}/edit` | `GET /api/me`, `GET /api/posts/{id}`, `PUT /api/posts/{id}` | Exigir sessão e confirmar que o post pertence ao usuário antes de exibir ou salvar o formulário. O backend também valida a autoria na atualização; ao salvar, revalidar a página de edição para que navegações de retorno exibam os dados atuais. |
+| Apagar post — página do post | `GET /api/me`, `GET /api/posts/{id}`, `DELETE /api/posts/{id}` | Exibir a ação apenas ao autor autenticado, pedir confirmação e validar novamente a autoria no servidor antes de apagar; revalidar as rotas do post, incluindo edição. |
 
 ## Sessão e autorização
 
@@ -35,6 +37,8 @@ URL da API no frontend para que possa ser alterada entre ambientes.
   cookie e exibir o cabeçalho de visitante.
 - O detalhe do post aceita autenticação opcional: sem uma sessão válida,
   `likedByMe` é `false`. Likes e criação de replies exigem autenticação.
+- Criar post exige sessão. Edição e exclusão exigem sessão e autoria; as telas e
+  Server Actions verificam o proprietário, além das verificações do backend.
 - A API não define endpoint de logout. A ação “sair” é local: limpar o cookie
   de sessão no servidor. O frontend usa `httpOnly`, `SameSite=Lax` e `Secure`
   em produção; o token nunca fica acessível ao JavaScript do navegador.
@@ -60,8 +64,7 @@ URL da API no frontend para que possa ser alterada entre ambientes.
 ## Endpoints adicionais não exigidos pelo braindump
 
 O OpenAPI também oferece atualização de avatar (`PUT /api/me/avatar`),
-atualização e exclusão de post (`PUT`/`DELETE /api/posts/{id}`), atualização
-de imagem do post (`PUT /api/posts/{id}/image`) e exclusão de reply
+atualização de imagem do post (`PUT /api/posts/{id}/image`) e exclusão de reply
 (`DELETE /api/posts/{id}/replies/{replyId}`). Esses recursos não estão
 descritos nas telas e funcionalidades do braindump e, portanto, não foram
 incluídos como requisitos do plano inicial.

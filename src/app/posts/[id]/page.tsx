@@ -2,7 +2,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { ApiError, getPost } from "../../lib/api";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { ApiError, AUTH_COOKIE, getMe, getPost } from "../../lib/api";
+import DeletePostButton from "../../components/DeletePostButton";
 import { formatDate } from "../../lib/format";
 
 async function PostContent({ params }: { params: Promise<{ id: string }> }) {
@@ -24,13 +27,41 @@ async function PostContent({ params }: { params: Promise<{ id: string }> }) {
     );
   }
 
+  let isOwner = false;
+  if ((await cookies()).has(AUTH_COOKIE)) {
+    try {
+      const user = await getMe();
+      isOwner = user.id === post.author.id;
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        redirect("/session/expired");
+      }
+      if (!(error instanceof ApiError)) throw error;
+    }
+  }
+
   return (
     <article className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold">{post.title}</h1>
-        <p className="text-sm opacity-70">
-          {post.author.name} · {formatDate(post.createdAt)}
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex flex-col gap-2">
+            <h1 className="text-4xl font-bold">{post.title}</h1>
+            <p className="text-sm opacity-70">
+              {post.author.name} · {formatDate(post.createdAt)}
+            </p>
+          </div>
+          {isOwner && (
+            <div className="flex gap-2">
+              <Link
+                className="btn btn-outline btn-sm"
+                href={`/posts/${post.id}/edit`}
+              >
+                Editar
+              </Link>
+              <DeletePostButton postId={post.id} />
+            </div>
+          )}
+        </div>
       </header>
 
       {post.imageUrl && (
