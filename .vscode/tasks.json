@@ -1,0 +1,17 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "publish-to-github",
+			"type": "shell",
+			"command": "git add -A -- . ':!.vscode'; git commit -m 'README completo' -m 'Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>'; if (git remote | Select-String -Pattern '^origin$' -Quiet) { git remote set-url origin https://github.com/cassiano25Ubc/nex-frontend-blog.git } else { git remote add origin https://github.com/cassiano25Ubc/nex-frontend-blog.git }; git remote -v; git push -u origin feat/auth-login-register 2>&1; git --no-pager log --oneline -3; git status --short",
+			"isBackground": false
+		},
+		{
+			"label": "git-status",
+			"type": "shell",
+			"command": "git status --short; git --no-pager log --oneline -2; git diff --stat",
+			"isBackground": false
+		}
+	]
+}
