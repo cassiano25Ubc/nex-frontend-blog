@@ -12,8 +12,9 @@ async function NewPostContent() {
 
   if (!(await cookies()).has("token")) redirect("/login");
 
+  let user;
   try {
-    await getMe();
+    user = await getMe();
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) {
       redirect("/session/expired");
@@ -30,7 +31,11 @@ async function NewPostContent() {
         </Link>
         <h1 className="mt-4 text-3xl font-bold">Criar post</h1>
       </div>
-      <PostForm action={createPostAction} submitLabel="Publicar post" />
+      <PostForm
+        action={createPostAction}
+        allowPremium={user.premium}
+        submitLabel="Publicar post"
+      />
     </section>
   );
 }

@@ -14,6 +14,7 @@ export default function PostForm({
   initialContent = "",
   currentImageUrl,
   withImage = false,
+  allowPremium = false,
   submitLabel,
 }: {
   action: PostAction;
@@ -21,6 +22,7 @@ export default function PostForm({
   initialContent?: string;
   currentImageUrl?: string | null;
   withImage?: boolean;
+  allowPremium?: boolean;
   submitLabel: string;
 }) {
   const [state, formAction, pending] = useActionState(action, {});
@@ -102,6 +104,16 @@ export default function PostForm({
                 "JPEG, PNG ou WebP, até 5 MB. Deixe vazio para manter a imagem atual."}
             </span>
           </div>
+        )}
+
+        {allowPremium && (
+          <label className="label cursor-pointer justify-start gap-3">
+            <input className="checkbox" name="premium" type="checkbox" />
+            <span className="label-text">
+              Post premium (visível apenas para usuários premium; não pode ser
+              alterado depois)
+            </span>
+          </label>
         )}
 
         <div className="card-actions justify-end">

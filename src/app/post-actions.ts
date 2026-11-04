@@ -108,10 +108,17 @@ export async function createPostAction(
 
   let post;
   try {
-    post = await createPost({ title, content });
+    post = await createPost({
+      title,
+      content,
+      ...(formData.get("premium") === "on" && { premium: true }),
+    });
   } catch (error) {
     if (error instanceof ApiError) {
       if (error.status === 401) await redirectForAuthError();
+      if (error.status === 403) {
+        return { error: "Apenas usuários premium podem criar posts premium." };
+      }
       return { error: apiErrorMessage(error) };
     }
     throw error;
