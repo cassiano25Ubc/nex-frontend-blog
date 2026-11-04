@@ -20,6 +20,7 @@ export default function PostCard({ post }: { post: PostListItem }) {
           <Link href={`/posts/${post.id}`} className="hover:underline">
             {post.title}
           </Link>
+          {post.premium && <span className="badge badge-accent">Premium</span>}
         </h2>
         <p className="line-clamp-3">{post.content}</p>
         <div className="flex flex-wrap items-center justify-between gap-2 text-sm opacity-70">

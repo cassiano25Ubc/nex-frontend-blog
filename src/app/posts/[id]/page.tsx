@@ -53,6 +53,9 @@ async function PostContent({ params }: { params: Promise<{ id: string }> }) {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-2">
             <h1 className="text-4xl font-bold">{post.title}</h1>
+            {post.premium && (
+              <span className="badge badge-accent w-fit">Premium</span>
+            )}
             <p className="text-sm opacity-70">
               {post.author.name} · {formatDate(post.createdAt)}
             </p>
