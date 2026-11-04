@@ -101,7 +101,7 @@ export class ApiError extends Error {
 }
 
 const http = axios.create({
-  baseURL: process.env.BACKEND_URL,
+  baseURL: process.env.BACKEND_URL || "http://localhost:3000",
   headers: { Accept: "application/json" },
 });
 

@@ -70,29 +70,69 @@ nex-frontend-blog/
 
 ## Como rodar
 
-Pré-requisito: a API do blog em execução (por padrão em `http://localhost:3000`).
+O frontend consome a API REST do projeto irmão
+[`NODE-API-BLOG`](../NODE-API-BLOG/README.md), por padrão em
+`http://localhost:3000`. As configurações de cada aplicação ficam em arquivos
+de ambiente separados.
 
-```bash
+### Primeira execução
+
+```powershell
+cd ..\NODE-API-BLOG
+Copy-Item .env.example .env   # só se .env ainda não existir
 npm install
-cp .env.example .env   # ajuste BACKEND_URL se necessário
-npm run dev
+npm run db:up
+npm run db:migrate
+
+cd ..\nex-frontend-blog
+Copy-Item .env.example .env.local   # só se .env.local ainda não existir
+npm install
+npm run dev:all
 ```
 
+O script `dev:all` inicia os containers do banco, banco de teste e Mailpit,
+depois inicia a API e o frontend. Para iniciar cada servidor separadamente,
+use `npm run dev` no backend e `npm run dev` no frontend em terminais distintos.
 Abra [http://localhost:3002](http://localhost:3002).
+O Docker Desktop precisa estar aberto antes de executar `npm run dev:all`.
 
-> A porta 3001 costuma ser usada pelo Bull Dashboard do backend, por isso o frontend roda na **3002**.
+> O frontend usa a porta **3002** para manter a API do backend na porta **3000**.
 
-## Variáveis de ambiente
+### Variáveis do frontend
 
 | Variável | Padrão | Descrição |
 | --- | --- | --- |
 | `BACKEND_URL` | `http://localhost:3000` | URL base da API do blog |
+
+Configure-a em `.env.local` no frontend. Se a porta da API mudar, atualize essa
+URL. `PORT` é configuração do backend; a porta do frontend continua definida
+pelos scripts do Next.js.
+
+### Variáveis do backend
+
+O arquivo [`NODE-API-BLOG/.env.example`](../NODE-API-BLOG/.env.example) é a
+referência para configurar a API. Ele documenta:
+
+| Variável | Uso |
+| --- | --- |
+| `PORT` | Porta HTTP da API (padrão `3000`) |
+| `DATABASE_URL` | Conexão PostgreSQL da aplicação |
+| `DATABASE_URL_TEST` | Conexão PostgreSQL usada nos testes |
+| `UPLOADS_DIR` | Diretório de imagens enviadas |
+| `SMTP_HOST`, `SMTP_PORT`, `MAIL_FROM` | Envio de e-mails; em desenvolvimento, usa Mailpit |
+| `MAILPIT_API_URL` | API do Mailpit usada pelos testes; padrão `http://localhost:8025` |
+
+Não copie variáveis ou segredos do backend para o ambiente do frontend. O
+backend atual não implementa Redis nem Stripe; variáveis `REDIS_URL` ou
+`STRIPE_*` não habilitam esses recursos. A chave secreta do Stripe nunca deve
+ser exposta ao frontend.
 
 ## Scripts
 
 | Comando | Descrição |
 | --- | --- |
 | `npm run dev` | Servidor de desenvolvimento (porta 3002) |
+| `npm run dev:all` | Inicia banco, Mailpit, backend e frontend no Windows |
 | `npm run build` | Build de produção |
 | `npm run start` | Executa o build de produção (porta 3002) |
 
@@ -101,3 +141,21 @@ Abra [http://localhost:3002](http://localhost:3002).
 - [Plano de integração](docs/plan.md)
 - [Contrato da API (OpenAPI)](docs/openapi.yaml)
 - [Requisitos iniciais](docs/braindump.md)
+
+## Usar a API no Insomnia
+
+O contrato OpenAPI pode ser importado diretamente como uma coleção:
+
+1. Inicie o backend em `http://localhost:3000` (ou ajuste o endereço em
+   `docs/openapi.yaml`).
+2. No Insomnia, escolha **Import** → **File** e selecione
+   `docs/openapi.yaml`.
+3. Envie `POST /api/auth/login` ou `POST /api/auth/register` com os dados da
+   sua conta. Copie o campo `token` da resposta.
+4. Nas requisições protegidas, configure **Auth** com o esquema HTTP de token
+   de acesso e informe o token copiado. O contrato identifica essas operações
+   com o esquema `BearerAuth`.
+
+O Insomnia acessa a API do backend diretamente; `BACKEND_URL` é uma variável do
+frontend e não é necessária para executar as requisições no Insomnia. O token
+deve ser mantido no ambiente local do Insomnia e não compartilhado ou commitado.

@@ -11,7 +11,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## Comunicação com o backend
 
 - Toda chamada ao backend fica em [lib/api.ts](lib/api.ts), usando **axios**. Contrato: [docs/openapi.yaml](docs/openapi.yaml). Ao mudar a API, atualize os dois.
-- URL base vem de `BACKEND_URL` (`.env`; modelo em `.env.example`).
+- URL base vem de `BACKEND_URL` (`.env.local`; modelo em `.env.example`), com
+  fallback local para `http://localhost:3000`.
 - As funções rodam **somente no servidor** (Server Components ou Server Actions). Nunca importe `lib/api.ts` em Client Components.
 - Autenticação: o token de sessão fica no cookie httpOnly `token` (`AUTH_COOKIE`) e é enviado como `Authorization: Bearer`. Rotas protegidas lançam `ApiError` 401 sem chamar o backend se não houver cookie; `getPost` usa auth opcional.
 - `login` e `register` gravam o cookie; `logout` o apaga. Isso só funciona em Server Actions/Route Handlers, não durante a renderização de Server Components.
