@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { connection } from "next/server";
 import {
   ApiError,
   AUTH_COOKIE,
@@ -16,6 +17,7 @@ async function logoutAction() {
 }
 
 export default async function Header() {
+  await connection();
   let user: UserProfile | null = null;
   let sessionError = false;
 
