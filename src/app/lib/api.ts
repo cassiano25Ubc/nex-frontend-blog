@@ -207,20 +207,33 @@ export function updateAvatar(image: File | Blob) {
 }
 
 // Posts
-export function listPosts(page = 1) {
-  return request<PostList>({
+// Backends que ainda não implementam likes/replies omitem esses campos.
+function withDefaults<T extends Post>(post: T) {
+  const item = post as Partial<PostDetail> & T;
+  return {
+    ...item,
+    likesCount: item.likesCount ?? 0,
+    likedByMe: item.likedByMe ?? false,
+    replies: item.replies ?? [],
+  };
+}
+
+export async function listPosts(page = 1) {
+  const list = await request<PostList>({
     method: "GET",
     url: "/api/posts",
     params: { page },
   });
+  return { ...list, data: list.data.map(withDefaults) };
 }
 
 // Authentication is optional; `likedByMe` is false without a valid session.
-export function getPost(id: number) {
-  return request<PostDetail>(
+export async function getPost(id: number) {
+  const post = await request<PostDetail>(
     { method: "GET", url: `/api/posts/${id}` },
     "optional",
   );
+  return withDefaults(post);
 }
 
 export function createPost(data: CreatePostRequest) {
