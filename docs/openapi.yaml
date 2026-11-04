@@ -140,6 +140,32 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/me/checkout:
+    post:
+      tags: [Me]
+      summary: Cria um checkout Stripe para o acesso premium
+      description: |
+        Cria uma Checkout Session no Stripe com `client_reference_id` igual ao id
+        do usuário autenticado e `customer_email` igual ao e-mail dele.
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: URL do checkout
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [url]
+                properties:
+                  url:
+                    type: string
+                    format: uri
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
   /api/posts:
     get:
       tags: [Posts]
