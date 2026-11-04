@@ -144,8 +144,9 @@ export async function updatePostAction(
 
   try {
     await getOwnedPost(postId);
-    await updatePost(postId, { title, content });
+    // Imagem primeiro: é a etapa que mais falha (formato/tamanho); assim, se falhar, nada foi gravado.
     if (image) await updatePostImage(postId, image);
+    await updatePost(postId, { title, content });
   } catch (error) {
     if (error instanceof ApiError) {
       if (error.status === 401) await redirectForAuthError();

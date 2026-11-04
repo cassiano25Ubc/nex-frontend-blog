@@ -15,7 +15,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   fallback local para `http://localhost:3000`.
 - As funções rodam **somente no servidor** (Server Components ou Server Actions). Nunca importe `lib/api.ts` em Client Components.
 - Autenticação: o token de sessão fica no cookie httpOnly `token` (`AUTH_COOKIE`) e é enviado como `Authorization: Bearer`. Rotas protegidas lançam `ApiError` 401 sem chamar o backend se não houver cookie; `getPost` usa auth opcional.
-- `login` e `register` gravam o cookie; `logout` o apaga. Isso só funciona em Server Actions/Route Handlers, não durante a renderização de Server Components.
+- `login` e `register` gravam o cookie; `logout` invalida o token no backend (`POST /api/auth/logout`, melhor esforço) e apaga o cookie. Isso só funciona em Server Actions/Route Handlers, não durante a renderização de Server Components.
+- Premium: `activateUserPremium` (só no webhook `src/app/api/webhook/stripe/route.ts`) usa `INTERNAL_API_TOKEN`; falhas transitórias retornam 500 ao Stripe, erros permanentes 400.
 - Erros: toda falha vira `ApiError` (`status`, `code`, `message`, `details`), com `code` igual ao do OpenAPI ou `NETWORK_ERROR`. Trate-os nas actions/páginas.
 - Uploads de imagem (`updateAvatar`, `updatePostImage`) recebem `File`/`Blob` e enviam multipart no campo `image`.
 - Respostas 204 (delete, like/unlike) retornam `void`.

@@ -103,10 +103,12 @@ O Docker Desktop precisa estar aberto antes de executar `npm run dev:all`.
 | Variável | Padrão | Descrição |
 | --- | --- | --- |
 | `BACKEND_URL` | `http://localhost:3000` | URL base da API do blog |
+| `STRIPE_WEBHOOK_SECRET` | — | Segredo de assinatura do webhook (`stripe listen --forward-to localhost:3002/api/webhook/stripe`) |
+| `INTERNAL_API_TOKEN` | — | Mesmo valor do backend; autentica a ativação premium feita pelo webhook |
 
-Configure-a em `.env.local` no frontend. Se a porta da API mudar, atualize essa
-URL. `PORT` é configuração do backend; a porta do frontend continua definida
-pelos scripts do Next.js.
+Configure-as em `.env.local` no frontend. Se a porta da API mudar, atualize
+`BACKEND_URL`. `PORT` é configuração do backend; a porta do frontend continua
+definida pelos scripts do Next.js.
 
 ### Variáveis do backend
 
@@ -121,11 +123,13 @@ referência para configurar a API. Ele documenta:
 | `UPLOADS_DIR` | Diretório de imagens enviadas |
 | `SMTP_HOST`, `SMTP_PORT`, `MAIL_FROM` | Envio de e-mails; em desenvolvimento, usa Mailpit |
 | `MAILPIT_API_URL` | API do Mailpit usada pelos testes; padrão `http://localhost:8025` |
+| `PUBLIC_API_URL` | Origem pública da API para montar `imageUrl`/`avatarUrl` absolutos |
+| `STRIPE_*` | Checkout Stripe (secret key, price id, success/cancel URLs) |
+| `INTERNAL_API_TOKEN` | Segredo compartilhado com o frontend para ativar premium |
 
-Não copie variáveis ou segredos do backend para o ambiente do frontend. O
-backend atual não implementa Redis nem Stripe; variáveis `REDIS_URL` ou
-`STRIPE_*` não habilitam esses recursos. A chave secreta do Stripe nunca deve
-ser exposta ao frontend.
+Não copie variáveis ou segredos do backend para o ambiente do frontend (exceto
+o `INTERNAL_API_TOKEN`, que deve ser igual nos dois lados). Redis não é usado.
+A chave secreta do Stripe nunca deve ser exposta ao frontend.
 
 ## Scripts
 

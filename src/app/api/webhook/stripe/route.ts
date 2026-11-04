@@ -1,4 +1,11 @@
 import Stripe from "stripe";
+import { activateUserPremium, ApiError } from "../../../lib/api";
+
+// 4xx do backend é permanente (retry não resolve); o resto é transitório/configuração.
+function isRetryable(error: unknown) {
+  if (!(error instanceof ApiError)) return true;
+  return error.code === "NETWORK_ERROR" || error.status >= 500;
+}
 
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -18,9 +25,24 @@ export async function POST(request: Request) {
   }
 
   if (event.type === "checkout.session.completed") {
-    const clientReferenceId = event.data.object.client_reference_id;
-    if (!clientReferenceId) return new Response(null, { status: 400 });
-    // sem ação por enquanto
+    const reference = event.data.object.client_reference_id;
+    if (!reference || !/^[1-9]\d*$/.test(reference)) {
+      return new Response(null, { status: 400 });
+    }
+    const userId = Number(reference);
+    if (!Number.isSafeInteger(userId)) return new Response(null, { status: 400 });
+
+    try {
+      await activateUserPremium(userId);
+    } catch (error) {
+      const retryable = isRetryable(error);
+      const detail =
+        error instanceof ApiError ? `${error.code} (${error.status})` : "unknown";
+      console.error(
+        `[stripe-webhook] falha ao ativar premium do usuário ${userId}: ${detail}`,
+      );
+      return new Response(null, { status: retryable ? 500 : 400 });
+    }
   }
 
   return new Response(null, { status: 200 });

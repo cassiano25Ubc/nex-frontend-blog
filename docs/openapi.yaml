@@ -16,6 +16,7 @@ tags:
   - name: Posts
   - name: Likes
   - name: Replies
+  - name: Internal
 paths:
   /health:
     get:
@@ -79,6 +80,21 @@ paths:
                 $ref: '#/components/schemas/AuthResponse'
         '400':
           $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '500':
+          $ref: '#/components/responses/InternalError'
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Encerra a sessão
+      description: Invalida o token de sessão do usuário autenticado no servidor.
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Sessão encerrada
         '401':
           $ref: '#/components/responses/Unauthorized'
         '500':
@@ -206,7 +222,7 @@ paths:
     post:
       tags: [Posts]
       summary: Cria um post
-      description: `premium: true` exige usuário premium.
+      description: "`premium: true` exige usuário premium."
       security:
         - BearerAuth: []
       requestBody:
@@ -358,7 +374,9 @@ paths:
     post:
       tags: [Likes]
       summary: Curte um post
-      description: A operação é idempotente e não possui body.
+      description: |
+        A operação é idempotente e não possui body. Responde 404 se o post for
+        premium e o usuário não tiver acesso a ele.
       security:
         - BearerAuth: []
       responses:
@@ -375,7 +393,9 @@ paths:
     delete:
       tags: [Likes]
       summary: Remove o like de um post
-      description: A operação é idempotente e não possui body.
+      description: |
+        A operação é idempotente e não possui body. Responde 404 se o post for
+        premium e o usuário não tiver acesso a ele.
       security:
         - BearerAuth: []
       responses:
@@ -399,7 +419,8 @@ paths:
       description: |
         Cria uma reply no post e enfileira uma notificação por e-mail para o
         autor do post, exceto quando ele próprio responde. Falhas de notificação
-        não alteram a resposta HTTP.
+        não alteram a resposta HTTP. Responde 404 se o post for premium e o
+        usuário não tiver acesso a ele.
       security:
         - BearerAuth: []
       requestBody:
@@ -454,12 +475,47 @@ paths:
         '500':
           $ref: '#/components/responses/InternalError'
 
+  /api/internal/users/{id}/premium:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        description: Identificador inteiro positivo do usuário.
+        schema:
+          type: integer
+          minimum: 1
+    put:
+      tags: [Internal]
+      summary: Marca um usuário como premium
+      description: |
+        Uso interno: chamado pelo webhook do Stripe do frontend após validar o
+        evento `checkout.session.completed`. Não usa sessão de usuário; exige o
+        header `X-Internal-Token`. Idempotente: usuário já premium também
+        responde 204.
+      security:
+        - InternalToken: []
+      responses:
+        '204':
+          description: Usuário marcado como premium (ou já era); corpo vazio.
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalError'
 components:
   securitySchemes:
     BearerAuth:
       type: http
       scheme: bearer
       bearerFormat: Session token (64 hexadecimal characters)
+    InternalToken:
+      type: apiKey
+      in: header
+      name: X-Internal-Token
+      description: Segredo compartilhado entre frontend e backend (`INTERNAL_API_TOKEN`).
   parameters:
     PostId:
       name: id

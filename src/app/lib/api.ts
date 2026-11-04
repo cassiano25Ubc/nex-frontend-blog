@@ -193,7 +193,13 @@ export async function login(data: LoginRequest) {
   return res;
 }
 
+// Invalida o token no servidor (melhor esforço) e sempre apaga o cookie local.
 export async function logout() {
+  try {
+    await request<void>({ method: "POST", url: "/api/auth/logout" }, "optional");
+  } catch {
+    // Backend indisponível ou token já inválido: o logout local continua valendo.
+  }
   (await cookies()).delete(AUTH_COOKIE);
 }
 
@@ -216,35 +222,47 @@ export function createCheckout() {
   );
 }
 
-// Posts
-// Backends que ainda não implementam likes/replies omitem esses campos.
-function withDefaults<T extends Post>(post: T) {
-  const item = post as Partial<PostDetail> & T;
-  return {
-    ...item,
-    premium: item.premium ?? false,
-    likesCount: item.likesCount ?? 0,
-    likedByMe: item.likedByMe ?? false,
-    replies: item.replies ?? [],
-  };
+// Uso interno (webhook do Stripe): autentica com INTERNAL_API_TOKEN, não com sessão.
+export function activateUserPremium(userId: number) {
+  const token = process.env.INTERNAL_API_TOKEN;
+  if (!token) {
+    throw new ApiError(500, "INTERNAL_ERROR", "INTERNAL_API_TOKEN não configurado");
+  }
+  return request<void>({
+    method: "PUT",
+    url: `/api/internal/users/${userId}/premium`,
+    headers: { "X-Internal-Token": token },
+  });
 }
 
-export async function listPosts(page = 1) {
+// Posts
+// Sessão inválida/expirada não deve derrubar leituras públicas: repete sem token.
+async function requestOptionalAuth<T>(config: AxiosRequestConfig): Promise<T> {
+  try {
+    return await request<T>(config, "optional");
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      return request<T>(config, "none");
+    }
+    throw error;
+  }
+}
+
+export function listPosts(page = 1) {
   // Auth opcional: usuários premium também recebem os posts premium.
-  const list = await request<PostList>(
-    { method: "GET", url: "/api/posts", params: { page } },
-    "optional",
-  );
-  return { ...list, data: list.data.map(withDefaults) };
+  return requestOptionalAuth<PostList>({
+    method: "GET",
+    url: "/api/posts",
+    params: { page },
+  });
 }
 
 // Authentication is optional; `likedByMe` is false without a valid session.
-export async function getPost(id: number) {
-  const post = await request<PostDetail>(
-    { method: "GET", url: `/api/posts/${id}` },
-    "optional",
-  );
-  return withDefaults(post);
+export function getPost(id: number) {
+  return requestOptionalAuth<PostDetail>({
+    method: "GET",
+    url: `/api/posts/${id}`,
+  });
 }
 
 export function createPost(data: CreatePostRequest) {
