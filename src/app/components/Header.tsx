@@ -9,6 +9,7 @@ import {
   logout,
   type UserProfile,
 } from "../lib/api";
+import CheckoutButton from "./CheckoutButton";
 
 async function logoutAction() {
   "use server";
@@ -49,6 +50,11 @@ export default async function Header() {
             <Link href="/posts/new" className="btn btn-primary btn-sm">
               Criar post
             </Link>
+            {user.premium ? (
+              <span className="badge badge-accent">Premium</span>
+            ) : (
+              <CheckoutButton />
+            )}
             <form action={logoutAction}>
               <button type="submit" className="btn btn-outline btn-sm">
                 Sair
