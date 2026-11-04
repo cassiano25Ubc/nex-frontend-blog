@@ -147,6 +147,7 @@ paths:
       description: |
         Cria uma Checkout Session no Stripe com `client_reference_id` igual ao id
         do usuário autenticado e `customer_email` igual ao e-mail dele.
+        Responde 409 se o usuário já for premium.
       security:
         - BearerAuth: []
       responses:
@@ -163,6 +164,8 @@ paths:
                     format: uri
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/Conflict'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -174,6 +177,9 @@ paths:
         Retorna posts em ordem de criação decrescente. Cada post inclui todas
         as replies em ordem crescente de criação; a paginação se aplica somente
         aos posts. `limit` é fixo em 10.
+
+        Autenticação opcional: posts premium só são listados para usuários premium
+        autenticados e cujo autor seja premium; para os demais, apenas posts públicos.
       parameters:
         - name: page
           in: query
@@ -183,6 +189,9 @@ paths:
             type: integer
             minimum: 1
             default: 1
+      security:
+        - BearerAuth: []
+        - {}
       responses:
         '200':
           description: Página de posts
@@ -197,6 +206,7 @@ paths:
     post:
       tags: [Posts]
       summary: Cria um post
+      description: `premium: true` exige usuário premium.
       security:
         - BearerAuth: []
       requestBody:
@@ -216,6 +226,8 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
         '500':
           $ref: '#/components/responses/InternalError'
 
@@ -225,7 +237,9 @@ paths:
     get:
       tags: [Posts]
       summary: Consulta um post
-      description: Autenticação opcional; `likedByMe` é `false` sem sessão válida.
+      description: |
+        Autenticação opcional; `likedByMe` é `false` sem sessão válida.
+        Posts premium respondem 404 para quem não tem acesso.
       security:
         - BearerAuth: []
         - {}
@@ -540,7 +554,7 @@ components:
           $ref: '#/components/schemas/UserProfile'
     UserProfile:
       type: object
-      required: [id, name, email, avatarUrl]
+      required: [id, name, email, avatarUrl, premium]
       properties:
         id:
           type: integer
@@ -553,6 +567,9 @@ components:
         avatarUrl:
           type: [string, 'null']
           format: uri
+        premium:
+          type: boolean
+          description: Indica se o usuário tem acesso premium (pagamento único, permanente).
     Author:
       type: object
       required: [id, name]
@@ -578,7 +595,7 @@ components:
           $ref: '#/components/schemas/Author'
     Post:
       type: object
-      required: [id, title, content, createdAt, imageUrl, author]
+      required: [id, title, content, createdAt, imageUrl, premium, author]
       properties:
         id:
           type: integer
@@ -593,6 +610,9 @@ components:
         imageUrl:
           type: [string, 'null']
           format: uri
+        premium:
+          type: boolean
+          description: Post visível apenas para usuários premium. Definido na criação e imutável.
         author:
           $ref: '#/components/schemas/Author'
     PostListItem:
@@ -660,6 +680,10 @@ components:
           type: string
           minLength: 1
           description: Espaços no início e no fim são removidos.
+        premium:
+          type: boolean
+          default: false
+          description: Somente usuários premium podem criar posts premium (403 caso contrário).
     UpdatePostRequest:
       type: object
       additionalProperties: false

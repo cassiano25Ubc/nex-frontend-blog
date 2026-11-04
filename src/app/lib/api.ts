@@ -26,6 +26,7 @@ export interface UserProfile {
   name: string;
   email: string;
   avatarUrl: string | null;
+  premium: boolean;
 }
 
 export interface AuthResponse {
@@ -51,6 +52,7 @@ export interface Post {
   content: string;
   createdAt: string;
   imageUrl: string | null;
+  premium: boolean;
   author: Author;
 }
 
@@ -82,6 +84,7 @@ export interface LoginRequest {
 export interface CreatePostRequest {
   title: string;
   content: string;
+  premium?: boolean;
 }
 
 export type UpdatePostRequest =
@@ -206,12 +209,20 @@ export function updateAvatar(image: File | Blob) {
   );
 }
 
+export function createCheckout() {
+  return request<{ url: string }>(
+    { method: "POST", url: "/api/me/checkout" },
+    "required",
+  );
+}
+
 // Posts
 // Backends que ainda não implementam likes/replies omitem esses campos.
 function withDefaults<T extends Post>(post: T) {
   const item = post as Partial<PostDetail> & T;
   return {
     ...item,
+    premium: item.premium ?? false,
     likesCount: item.likesCount ?? 0,
     likedByMe: item.likedByMe ?? false,
     replies: item.replies ?? [],
@@ -219,11 +230,11 @@ function withDefaults<T extends Post>(post: T) {
 }
 
 export async function listPosts(page = 1) {
-  const list = await request<PostList>({
-    method: "GET",
-    url: "/api/posts",
-    params: { page },
-  });
+  // Auth opcional: usuários premium também recebem os posts premium.
+  const list = await request<PostList>(
+    { method: "GET", url: "/api/posts", params: { page } },
+    "optional",
+  );
   return { ...list, data: list.data.map(withDefaults) };
 }
 

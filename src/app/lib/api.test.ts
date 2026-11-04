@@ -6,7 +6,7 @@ vi.mock("next/headers", () => ({
   cookies: async () => ({ get: cookieGet, set: vi.fn(), delete: vi.fn() }),
 }));
 
-import { ApiError, getMe } from "./api";
+import { ApiError, createCheckout, getMe } from "./api";
 
 describe("lib/api", () => {
   beforeEach(() => {
@@ -21,5 +21,11 @@ describe("lib/api", () => {
       code: "UNAUTHORIZED",
     });
     await expect(getMe()).rejects.toBeInstanceOf(ApiError);
+  });
+
+  it("exige sessão para criar checkout", async () => {
+    cookieGet.mockReturnValue(undefined);
+
+    await expect(createCheckout()).rejects.toMatchObject({ status: 401 });
   });
 });
