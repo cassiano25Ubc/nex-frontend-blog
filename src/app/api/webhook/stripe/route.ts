@@ -19,7 +19,8 @@ export async function POST(request: Request) {
 
   if (event.type === "checkout.session.completed") {
     const clientReferenceId = event.data.object.client_reference_id;
-    void clientReferenceId; // sem ação por enquanto
+    if (!clientReferenceId) return new Response(null, { status: 400 });
+    // sem ação por enquanto
   }
 
   return new Response(null, { status: 200 });
