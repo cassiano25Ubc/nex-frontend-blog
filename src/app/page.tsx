@@ -8,10 +8,10 @@ import Pagination from "./components/Pagination";
 async function PostList({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string | string[] }>;
+  searchParams: Promise<{ page?: string | string[]; checkout?: string }>;
 }) {
   await connection();
-  const { page } = await searchParams;
+  const { page, checkout } = await searchParams;
   const raw = Array.isArray(page) ? page[0] : page;
   const current = Math.max(1, Number.parseInt(raw ?? "1", 10) || 1);
 
@@ -44,6 +44,16 @@ async function PostList({
 
   return (
     <>
+      {checkout === "success" && (
+        <div role="alert" className="alert alert-success">
+          ✓ Pagamento recebido! O acesso premium é liberado em instantes; recarregue a página.
+        </div>
+      )}
+      {checkout === "cancel" && (
+        <div role="alert" className="alert alert-warning">
+          ✕ Pagamento cancelado.
+        </div>
+      )}
       <div className="flex flex-col gap-4">
         {data.map((post) => (
           <PostCard key={post.id} post={post} />
