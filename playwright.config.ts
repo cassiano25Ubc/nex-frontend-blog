@@ -23,6 +23,10 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3002',
     reuseExistingServer: !process.env.CI,
-    env: { MSW_ENABLED: 'true' },
+    env: {
+      MSW_ENABLED: 'true',
+      STRIPE_WEBHOOK_SECRET: 'whsec_e2e_secret',
+      INTERNAL_API_TOKEN: 'internal-e2e-token',
+    },
   },
 });
